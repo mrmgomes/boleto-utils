@@ -1,0 +1,29 @@
+{
+  "name": "@mrmgomes/boleto-utils",
+  "version": "1.0.0",
+  "description": "Biblioteca com funções úteis para a validação de todos os tipos de boleto",
+  "main": "./src/boleto-utils.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrmgomes/boleto-utils.git"
+  },
+  "keywords": [
+    "boleto",
+    "boletos",
+    "conta",
+    "convenio",
+    "arrecadacao",
+    "codigo",
+    "barras",
+    "linha",
+    "digitavel",
+    "mrmgomes",
+    "javascript"
+  ],
+  "author": "Marcelo Gomes",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mrmgomes/boleto-utils/issues"
+  },
+  "homepage": "https://github.com/mrmgomes/boleto-utils#readme"
+}
