@@ -1,3 +1,16 @@
+
+/** 
+ * Identifica o tipo de código inserido (se baseando na quantidade de dígitos).
+ * 
+ * ------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * 
+ * ------------
+ * 
+ * @return {string} CODIGO_DE_BARRAS
+ * @return {string} LINHA_DIGITAVEL
+ */
 exports.identificarTipoCodigo = (codigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
 
@@ -12,6 +25,24 @@ exports.identificarTipoCodigo = (codigo) => {
     }
 }
 
+/** 
+ * Identifica o tipo de boleto inserido a partir da validação de seus dois dígitos iniciais.
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * 
+ * -------------
+ * 
+ * @return {string} BANCO
+ * @return {string} ARRECADACAO_PREFEITURA
+ * @return {string} ARRECADACAO_ORGAOS_GOVERNAMENTAIS
+ * @return {string} ARRECADACAO_TAXAS_DE_TRANSITO
+ * @return {string} CONVENIO_SANEAMENTO
+ * @return {string} CONVENIO_ENERGIA_ELETRICA_E_GAS
+ * @return {string} CONVENIO_TELECOMUNICACOES
+ * @return {string} OUTROS
+ */
 exports.identificarTipoBoleto = (codigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
 
@@ -38,6 +69,18 @@ exports.identificarTipoBoleto = (codigo) => {
     }
 }
 
+/** 
+ * Identifica o o código de referência do boleto para determinar qual módulo
+ * será utilizado para calcular os dígitos verificadores
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * 
+ * -------------
+ * 
+ * @return {json} {mod, efetivo}
+ */
 exports.identificarReferencia = (codigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
 
@@ -75,6 +118,18 @@ exports.identificarReferencia = (codigo) => {
     }
 }
 
+/** 
+ * Identifica o fator da data de vencimento do boleto
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * @param {string} tipoCodigo tipo de código inserido (CODIGO_DE_BARRAS / LINHA_DIGITAVEL)
+ * 
+ * -------------
+ * 
+ * @return {Date} dataBoleto
+ */
 exports.identificarData = (codigo, tipoCodigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
     const tipoBoleto = this.identificarTipoBoleto(codigo);
@@ -82,83 +137,138 @@ exports.identificarData = (codigo, tipoCodigo) => {
     let fatorData = '';
     let dataBoleto = new Date();
 
+    dataBoleto.setFullYear(1997);
+    dataBoleto.setMonth(9);
+    dataBoleto.setDate(7);
+    dataBoleto.setHours(23, 54, 59);
+    
     if (tipoCodigo === 'CODIGO_DE_BARRAS') {
         if (tipoBoleto == 'BANCO') {
             fatorData = codigo.substr(5, 4)
-            dataBoleto.setFullYear(1997);
-            dataBoleto.setMonth(9);
-            dataBoleto.setDate(7);
-            dataBoleto.setHours(23, 54, 59);
-            dataBoleto.setDate(dataBoleto.getDate() + Number(fatorData));
-            dataBoleto.setTime(dataBoleto.getTime() + dataBoleto.getTimezoneOffset() - (3) * 60 * 60 * 1000);
         } else {
-            dataBoleto.setFullYear(parseInt(codigo.substr(19, 4)));
-            dataBoleto.setMonth(parseInt(codigo.substr(23, 2) - 1));
-            dataBoleto.setDate(parseInt(codigo.substr(25, 2)));
-            dataBoleto.setHours(23, 54, 59);
-            dataBoleto.setTime(dataBoleto.getTime() + dataBoleto.getTimezoneOffset() - (3) * 60 * 60 * 1000);
+            fatorData = '0';
         }
     } else if (tipoCodigo === 'LINHA_DIGITAVEL') {
         if (tipoBoleto == 'BANCO') {
             fatorData = codigo.substr(33, 4)
-            dataBoleto.setFullYear(1997);
-            dataBoleto.setMonth(9);
-            dataBoleto.setDate(7);
-            dataBoleto.setHours(23, 54, 59);
-            dataBoleto.setDate(dataBoleto.getDate() + Number(fatorData));
-            dataBoleto.setTime(dataBoleto.getTime() + dataBoleto.getTimezoneOffset() - (3) * 60 * 60 * 1000);
         } else {
-            dataBoleto.setFullYear(parseInt(codigo.substr(20, 3) + codigo.substr(24, 1)));
-            dataBoleto.setMonth(parseInt(codigo.substr(25, 2) - 1));
-            dataBoleto.setDate(parseInt(codigo.substr(27, 2)));
-            dataBoleto.setHours(23, 54, 59);
-            dataBoleto.setTime(dataBoleto.getTime() + dataBoleto.getTimezoneOffset() - (3) * 60 * 60 * 1000);
+            fatorData = '0';
         }
     }
-
+    
+    dataBoleto.setDate(dataBoleto.getDate() + Number(fatorData));
+    dataBoleto.setTime(dataBoleto.getTime() + dataBoleto.getTimezoneOffset() - (3) * 60 * 60 * 1000);
 
     return dataBoleto;
 }
 
-exports.identificarValor = (codigo, tipoCodigo) => {
+/** 
+ * Identifica o valor no CÓDIGO DE BARRAS do boleto do tipo 'Arrecadação'
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * @param {string} tipoCodigo tipo de código inserido (CODIGO_DE_BARRAS / LINHA_DIGITAVEL)
+ * 
+ * -------------
+ * 
+ * @return {string} valorFinal
+ */
+exports.identificarValorCodBarrasArrecadacao = (codigo, tipoCodigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
+    const isValorEfetivo = this.identificarReferencia(codigo).efetivo;
+
+    let valorBoleto = '';
+    let valorFinal;
+
+    if (isValorEfetivo) {
+        if (tipoCodigo == 'LINHA_DIGITAVEL') {
+            valorBoleto = codigo.substr(4, 14);
+            valorBoleto = codigo.split('');
+            valorBoleto.splice(11, 1);
+            valorBoleto = valorBoleto.join('');
+            valorBoleto = valorBoleto.substr(4, 11);
+        } else if (tipoCodigo == 'CODIGO_DE_BARRAS') {
+            valorBoleto = codigo.substr(4, 11);
+        }
+
+        valorFinal = valorBoleto.substr(0, 9) + '.' + valorBoleto.substr(9, 2);
+
+        let char = valorFinal.substr(1, 1);
+        while (char === '0') {
+            valorFinal = substringReplace(valorFinal, '', 0, 1);
+            char = valorFinal.substr(1, 1);
+        }
+
+    } else {
+        valorFinal = 0;
+    }
+
+    return valorFinal;
+}
+
+/** 
+ * Identifica o valor no boleto inserido
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * @param {string} tipoCodigo tipo de código inserido (CODIGO_DE_BARRAS / LINHA_DIGITAVEL)
+ * 
+ * -------------
+ * 
+ * @return {float} valorFinal
+ */
+exports.identificarValor = (codigo, tipoCodigo) => {
 
     const tipoBoleto = this.identificarTipoBoleto(codigo);
 
     let valorBoleto = '';
     let valorFinal;
 
-    switch (tipoCodigo) {
-        case 'CODIGO_DE_BARRAS':
-            if (tipoBoleto == 'BANCO') {
-                valorBoleto = codigo.substr(9, 10);
-            } else {
-                valorBoleto = codigo.substr(4, 14);
-            }
-            break;
-        case 'LINHA_DIGITAVEL':
-            if (tipoBoleto == 'BANCO') {
-                valorBoleto = codigo.substr(37);
-            } else {
-                valorBoleto = codigo.substr(4, 7) + codigo.substr(12, 4);
-            }
-            break;
-        default:
-            valorBoleto = 'Valor do boleto não informado';
-            break;
-    }
+    if (tipoCodigo == 'CODIGO_DE_BARRAS') {
+        if (tipoBoleto == 'BANCO') {
+            valorBoleto = codigo.substr(9, 10);
+            valorFinal = valorBoleto.substr(0, 8) + '.' + valorBoleto.substr(8, 2);
 
-    valorFinal = valorBoleto.substr(0, 8) + '.' + valorBoleto.substr(8, 2); // TODO: !!!!!
-    let char = valorFinal.substr(1, 1);
-    while (char === '0') {
-        valorFinal = substringReplace(valorFinal, '', 0, 1);
-        char = valorFinal.substr(1, 1);
-    }
+            let char = valorFinal.substr(1, 1);
+            while (char === '0') {
+                valorFinal = substringReplace(valorFinal, '', 0, 1);
+                char = valorFinal.substr(1, 1);
+            }
+        } else {
+            valorFinal = this.identificarValorCodBarrasArrecadacao(codigo, 'CODIGO_DE_BARRAS');
+        }
 
-    const valorFloat = parseFloat(valorFinal);
-    return valorFloat;
+    } else if (tipoCodigo == 'LINHA_DIGITAVEL') {
+        if (tipoBoleto == 'BANCO') {
+            valorBoleto = codigo.substr(37);
+            valorFinal = valorBoleto.substr(0, 8) + '.' + valorBoleto.substr(8, 2);
+
+            let char = valorFinal.substr(1, 1);
+            while (char === '0') {
+                valorFinal = substringReplace(valorFinal, '', 0, 1);
+                char = valorFinal.substr(1, 1);
+            }
+        } else {
+            valorFinal = this.identificarValorCodBarrasArrecadacao(codigo, 'LINHA_DIGITAVEL');
+        }
+    }
+    return parseFloat(valorFinal);
 }
 
+/** 
+ * Define qual módulo deverá ser utilizado para calcular os dígitos verificadores
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * @param {int} mod Modulo 10 ou Modulo 11
+ * 
+ * -------------
+ * 
+ * @return {string} digitoVerificador
+ */
 exports.digitosVerificadores = (codigo, mod) => {
     codigo = codigo.replace(/[^0-9]/g, '');
     switch (mod) {
@@ -173,6 +283,18 @@ exports.digitosVerificadores = (codigo, mod) => {
     }
 }
 
+/** 
+ * Converte a numeração do código de barras em linha digitável
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * @param {boolean} formatada Gerar numeração convertida com formatação (formatado = true / somente números = false)
+ * 
+ * -------------
+ * 
+ * @return {string} resultado
+ */
 exports.codBarras2LinhaDigitavel = (codigo, formatada) => {
     codigo = codigo.replace(/[^0-9]/g, '');
 
@@ -216,15 +338,23 @@ exports.codBarras2LinhaDigitavel = (codigo, formatada) => {
         let bloco4;
 
         if (identificacaoValorRealOuReferencia.mod == 10) {
-            bloco1 = codigo.substr(0, 11) + this.calculaMod10(codigo.substr(0, 3) + codigo.substr(5, 7));
+            bloco1 = codigo.substr(0, 11) + this.calculaMod10(codigo.substr(0, 11));
             bloco2 = codigo.substr(11, 11) + this.calculaMod10(codigo.substr(11, 11));
             bloco3 = codigo.substr(22, 11) + this.calculaMod10(codigo.substr(22, 11));
             bloco4 = codigo.substr(33, 11) + this.calculaMod10(codigo.substr(33, 11));
+            console.log('bloco1 MOD 10:', bloco1);
+            console.log('bloco2 MOD 10:', bloco2);
+            console.log('bloco3 MOD 10:', bloco3);
+            console.log('bloco4 MOD 10:', bloco4);
         } else if (identificacaoValorRealOuReferencia.mod == 11) {
-            bloco1 = codigo.substr(0, 11) + this.calculaMod11(codigo.substr(0, 3) + codigo.substr(5, 7));
+            bloco1 = codigo.substr(0, 11) + this.calculaMod11(codigo.substr(0, 11));
             bloco2 = codigo.substr(11, 11) + this.calculaMod11(codigo.substr(11, 11));
             bloco3 = codigo.substr(22, 11) + this.calculaMod11(codigo.substr(22, 11));
             bloco4 = codigo.substr(33, 11) + this.calculaMod11(codigo.substr(33, 11));
+            console.log('bloco1 MOD 11:', bloco1);
+            console.log('bloco2 MOD 11:', bloco2);
+            console.log('bloco3 MOD 11:', bloco3);
+            console.log('bloco4 MOD 11:', bloco4);
         }
 
         resultado = bloco1 + bloco2 + bloco3 + bloco4;
@@ -233,19 +363,59 @@ exports.codBarras2LinhaDigitavel = (codigo, formatada) => {
     return resultado;
 }
 
-exports.linhaDigitavel2CodBarras = (codigo, formatada) => {
+/** 
+ * Converte a numeração da linha digitável em código de barras
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * 
+ * -------------
+ * 
+ * @return {string} resultado
+ */
+exports.linhaDigitavel2CodBarras = (codigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
 
-    let resultado = codigo.substr(0, 4) +
-        codigo.substr(32, 1) +
-        codigo.substr(33, 14) +
-        codigo.substr(4, 5) +
-        codigo.substr(10, 10) +
-        codigo.substr(21, 10);
+    const tipoBoleto = this.identificarTipoBoleto(codigo);
+
+    let resultado = '';
+
+    if (tipoBoleto == 'BANCO') {
+        resultado = codigo.substr(0, 4) +
+            codigo.substr(32, 1) +
+            codigo.substr(33, 14) +
+            codigo.substr(4, 5) +
+            codigo.substr(10, 10) +
+            codigo.substr(21, 10);
+    } else {
+
+        codigo = codigo.split('');
+        codigo.splice(11, 1);
+        codigo.splice(22, 1);
+        codigo.splice(33, 1);
+        codigo.splice(44, 1);
+        codigo = codigo.join('');
+
+        resultado = codigo;
+    }
 
     return resultado;
 }
 
+/** 
+ * Calcular o dígito verificador de toda a numeração do código de barras
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * @param {int} posicaoCodigo Posição onde deve se encontrar o dígito verificador
+ * @param {int} mod Módulo 10 ou Módulo 11
+ * 
+ * -------------
+ * 
+ * @return {string} numero
+ */
 exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
     codigo = codigo.replace(/[^0-9]/g, '');
 
@@ -260,34 +430,33 @@ exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
     }
 }
 
-// exports.calculaDVLinhaDigitavel = (codigo) => {
-//     codigo = codigo.replace(/[^0-9]/g, '');
+/** 
+ * Gerar código de barras já realizando o cálculo do dígito verificador
+ * 
+ * -------------
+ * 
+ * @param {string} novoCodigo Numeração do boleto
+ * 
+ * -------------
+ * 
+ * @return {string} numero
+ */
+exports.geraCodBarras = (codigo) => {
+    codigo = codigo.replace(/[^0-9]/g, '');
 
-//     codigo = codigo.split('');
-//     codigo.splice(4, 1);
-//     codigo = codigo.join('');
-//     // let novoCodigo = this.linhaDigitavel2CodBarras(codigo, false);
-//     // novoCodigo = novoCodigo.split('');
-//     // novoCodigo.splice(4, 1);
-//     // novoCodigo = novoCodigo.join('');
+    const tipoBoleto = this.identificarTipoBoleto(codigo);
 
-//     // let dv = this.calculaMod11(novoCodigo);
-//     // novoCodigo = novoCodigo.substr(0, 4) + dv + novoCodigo.substr(4);
-//     // return novoCodigo;
-//     return this.calculaMod11(codigo);
-// }
+    let novoCodigo;
 
-// exports.montarCodBarrasComDV = (codigo, posicaoCodigo, mod) => {
-//     codigo = codigo.replace(/[^0-9]/g, '');
+    novoCodigo = this.linhaDigitavel2CodBarras(codigo);
+    novoCodigo = novoCodigo.split('');
+    novoCodigo.splice(4, 1);
+    novoCodigo = novoCodigo.join('');
+    let dv = this.calculaMod11(novoCodigo);
+    novoCodigo = novoCodigo.substr(0, 4) + dv + novoCodigo.substr(4);
 
-//     codigo = codigo.split('');
-//     codigo.splice(posicaoCodigo, 1);
-//     codigo = codigo.join('');
-
-//     const dv = this.calculaDVCodBarras(codigo, posicaoCodigo, mod);
-
-//     return novoCodigo.substr(0, 4) + dv + novoCodigo.substr(4);
-// }
+    return novoCodigo;
+}
 
 /**
  * ## __`BOLETO COBRANÇA`__
@@ -377,18 +546,34 @@ exports.validarBoleto = (codigo) => {
     let retorno = {};
     codigo = codigo.replace(/[^0-9]/g, '');
 
+    /** 
+     * Boletos de cartão de crédito geralmente possuem 46 dígitos. É necessário adicionar mais um zero no final, para formar 47 caracteres 
+     * Alguns boletos de cartão de crédito do Itaú possuem 36 dígitos. É necessário acrescentar 11 zeros no final.
+     */ 
+    if (codigo.length == 36 && codigo.length == 46) {
+        codigo = codigo + '0';
+    }
+
     if (codigo.length != 44 && codigo.length != 46 && codigo.length != 47 && codigo.length != 48) {
         retorno.sucesso = false;
-        retorno.mensagem = 'Por favor insira uma numeração válida. Códigos de barras devem ter 44 caracteres numéricos. Linhas digitáveis podem possuir 46, 47 ou 48 caracteres numéricos. Qualquer caractere não numérico será desconsiderado.';
+        retorno.mensagem = 'O código inserido possui ' + codigo.length + ' dígitos. Por favor insira uma numeração válida. Códigos de barras SEMPRE devem ter 44 caracteres numéricos. Linhas digitáveis podem possuir 46 (boletos de cartão de crédito), 47 (boletos bancários/cobrança) ou 48 (contas convênio/arrecadação) caracteres numéricos. Qualquer caractere não numérico será desconsiderado.';
     } else if (codigo.substr(0, 1) == '8' && codigo.length == 46 && codigo.length == 47) {
         retorno.sucesso = false;
-        retorno.mensagem = 'Este tipo de boleto deve possuir 44 ou 48 caracteres numéricos.';
+        retorno.mensagem = 'Este tipo de boleto deve possuir um código de barras 44 caracteres numéricos. Ou linha digitável de 48 caracteres numéricos.';
     } else {
         retorno.sucesso = true;
-        retorno.mensagem = 'Boleto validado com sucesso';
+        retorno.mensagem = 'Boleto válido';
         let tipoCodigo = this.identificarTipoCodigo(codigo);
 
         switch (tipoCodigo) {
+            case 'LINHA_DIGITAVEL':
+                retorno.tipoCodigoInput = 'LINHA_DIGITAVEL';
+                retorno.tipoBoleto = this.identificarTipoBoleto(codigo, 'LINHA_DIGITAVEL');
+                retorno.codigoBarras = this.linhaDigitavel2CodBarras(codigo);
+                retorno.linhaDigitavel = codigo;
+                retorno.vencimento = this.identificarData(codigo, 'LINHA_DIGITAVEL');
+                retorno.valor = this.identificarValor(codigo, 'LINHA_DIGITAVEL');
+                break;
             case 'CODIGO_DE_BARRAS':
                 retorno.tipoCodigoInput = 'CODIGO_DE_BARRAS';
                 retorno.tipoBoleto = this.identificarTipoBoleto(codigo, 'CODIGO_DE_BARRAS');
@@ -396,16 +581,6 @@ exports.validarBoleto = (codigo) => {
                 retorno.linhaDigitavel = this.codBarras2LinhaDigitavel(codigo, false);
                 retorno.vencimento = this.identificarData(codigo, 'CODIGO_DE_BARRAS');
                 retorno.valor = this.identificarValor(codigo, 'CODIGO_DE_BARRAS');
-                // retorno.dvCodBarras = this.identificarTipoBoleto(codigo, 'CODIGO_DE_BARRAS') == 'BANCO' ? this.calculaDVCodBarras(codigo, 4, this.identificarReferencia(codigo).mod) : this.calculaDVCodBarras(codigo, 3, this.identificarReferencia(codigo).mod);
-                break;
-            case 'LINHA_DIGITAVEL':
-                retorno.tipoCodigoInput = 'LINHA_DIGITAVEL';
-                retorno.tipoBoleto = this.identificarTipoBoleto(codigo, 'LINHA_DIGITAVEL');
-                retorno.codigoBarras = this.codBarras2LinhaDigitavel(codigo, false);
-                // retorno.codigoBarras = this.calculaDVLinhaDigitavel(codigo);
-                retorno.linhaDigitavel = codigo;
-                retorno.vencimento = this.identificarData(codigo, 'LINHA_DIGITAVEL');
-                retorno.valor = this.identificarValor(codigo, 'LINHA_DIGITAVEL');
                 break;
             default:
                 break;
@@ -415,8 +590,16 @@ exports.validarBoleto = (codigo) => {
     return retorno;
 }
 
-/**
- * CÁLCULO MOD 10
+/** 
+ * Calcula o dígito verificador de uma numeração a partir do módulo 10
+ * 
+ * -------------
+ * 
+ * @param {string} numero Numeração
+ * 
+ * -------------
+ * 
+ * @return {string} soma
  */
 exports.calculaMod10 = (numero) => {
     numero = numero.replace(/\D/g, '');
@@ -441,8 +624,16 @@ exports.calculaMod10 = (numero) => {
     return soma;
 }
 
-/**
- * CÁLCULO MOD 11 
+/** 
+ * Calcula o dígito verificador de uma numeração a partir do módulo 11
+ * 
+ * -------------
+ * 
+ * @param {string} numero Numeração
+ * 
+ * -------------
+ * 
+ * @return {string} soma
  */
 exports.calculaMod11 = (numero) => {
     numero = numero.replace(/\D/g, '');
@@ -463,13 +654,31 @@ exports.calculaMod11 = (numero) => {
     if (digito > 9) {
         digito = 0;
     }
-    /* Utilizar o dígito 1(um) sempre que o resultado do cálculo padrão for igual a 0(zero), 1(um) ou 10(dez). */
-    if (digito === 0) {
+
+    // Se o resto da divisão for igual a 0 ou 1, o digito será 0
+    // Se for igual a 10, o dígito será 1 
+    if (digito === 0 || digito === 1) {
+        digito = 0;
+    } else if (digito === 10) {
         digito = 1;
     }
     return digito;
 }
 
+/** 
+ * Função auxiliar para remover os zeros à esquerda dos valores detectados no código inserido
+ * 
+ * -------------
+ * 
+ * @param {string} str Texto a ser verificado
+ * @param {string} repl Texto que substituirá
+ * @param {int} inicio Posição inicial
+ * @param {int} tamanho Tamanho
+ * 
+ * -------------
+ * 
+ * @return {string} resultado
+ */
 function substringReplace(str, repl, inicio, tamanho) {
     if (inicio < 0) {
         inicio = inicio + str.length;
