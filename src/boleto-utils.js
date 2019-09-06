@@ -342,19 +342,11 @@ exports.codBarras2LinhaDigitavel = (codigo, formatada) => {
             bloco2 = codigo.substr(11, 11) + this.calculaMod10(codigo.substr(11, 11));
             bloco3 = codigo.substr(22, 11) + this.calculaMod10(codigo.substr(22, 11));
             bloco4 = codigo.substr(33, 11) + this.calculaMod10(codigo.substr(33, 11));
-            console.log('bloco1 MOD 10:', bloco1);
-            console.log('bloco2 MOD 10:', bloco2);
-            console.log('bloco3 MOD 10:', bloco3);
-            console.log('bloco4 MOD 10:', bloco4);
         } else if (identificacaoValorRealOuReferencia.mod == 11) {
             bloco1 = codigo.substr(0, 11) + this.calculaMod11(codigo.substr(0, 11));
             bloco2 = codigo.substr(11, 11) + this.calculaMod11(codigo.substr(11, 11));
             bloco3 = codigo.substr(22, 11) + this.calculaMod11(codigo.substr(22, 11));
             bloco4 = codigo.substr(33, 11) + this.calculaMod11(codigo.substr(33, 11));
-            console.log('bloco1 MOD 11:', bloco1);
-            console.log('bloco2 MOD 11:', bloco2);
-            console.log('bloco3 MOD 11:', bloco3);
-            console.log('bloco4 MOD 11:', bloco4);
         }
 
         resultado = bloco1 + bloco2 + bloco3 + bloco4;
@@ -556,12 +548,15 @@ exports.validarBoleto = (codigo) => {
 
     if (codigo.length != 44 && codigo.length != 46 && codigo.length != 47 && codigo.length != 48) {
         retorno.sucesso = false;
+        retorno.codigoInput = codigo;
         retorno.mensagem = 'O código inserido possui ' + codigo.length + ' dígitos. Por favor insira uma numeração válida. Códigos de barras SEMPRE devem ter 44 caracteres numéricos. Linhas digitáveis podem possuir 46 (boletos de cartão de crédito), 47 (boletos bancários/cobrança) ou 48 (contas convênio/arrecadação) caracteres numéricos. Qualquer caractere não numérico será desconsiderado.';
     } else if (codigo.substr(0, 1) == '8' && codigo.length == 46 && codigo.length == 47) {
         retorno.sucesso = false;
+        retorno.codigoInput = codigo;
         retorno.mensagem = 'Este tipo de boleto deve possuir um código de barras 44 caracteres numéricos. Ou linha digitável de 48 caracteres numéricos.';
     } else {
         retorno.sucesso = true;
+        retorno.codigoInput = codigo;
         retorno.mensagem = 'Boleto válido';
         let tipoCodigo = this.identificarTipoCodigo(codigo);
 
