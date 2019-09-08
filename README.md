@@ -29,6 +29,7 @@ Função | Definição
 `codBarras2LinhaDigitavel(codigo: string, formatada: boolean)` | Transforma a numeração no formato de código de barras em linha digitável. Requer numeração completa (com ou sem formatação) e valor `true` ou `false` que representam a forma em que o código convertido será exibido. Com (true) ou sem (false) formatação.
 `linhaDigitavel2CodBarras(codigo: string)` | Transforma a numeração no formato linha digitável em código de barras. Requer numeração completa (com ou sem formatação).
 `calculaDVCodBarras(codigo: string, posicaoCodigo: int, mod: int)` | Verifica a numeração do código de barras, extrai o DV (dígito verificador) presente na posição indicada, realiza o cálculo do dígito utilizando o módulo indicado e retorna o dígito verificador. Serve para validar o código de barras. Requer numeração completa (com ou sem formatação), caracteres numéricos que representam a posição do dígito verificador no código de barras e caracteres numéricos que representam o módulo a ser usado (valores aceitos: 10 ou 11).
+`validarCodigoComDV(codigo: string)` | Calcula o dígito verificador de toda a numeração do código de barras. Retorno `true` para numeração válida e `false` para inválida.
 `geraCodBarras(codigo: string)` | Transforma a linha digitável em código de barras inserindo o DV.
 `calculaMod10(numero: string)` | Realiza o cálculo Módulo 10 do número inserido.
 `calculaMod11(numero: string)` | Realiza o cálculo Módulo 11 do número inserido.

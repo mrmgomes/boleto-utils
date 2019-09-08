@@ -1,4 +1,3 @@
-
 /** 
  * Identifica o tipo de código inserido (se baseando na quantidade de dígitos).
  * 
@@ -141,7 +140,7 @@ exports.identificarData = (codigo, tipoCodigo) => {
     dataBoleto.setMonth(9);
     dataBoleto.setDate(7);
     dataBoleto.setHours(23, 54, 59);
-    
+
     if (tipoCodigo === 'CODIGO_DE_BARRAS') {
         if (tipoBoleto == 'BANCO') {
             fatorData = codigo.substr(5, 4)
@@ -155,7 +154,7 @@ exports.identificarData = (codigo, tipoCodigo) => {
             fatorData = '0';
         }
     }
-    
+
     dataBoleto.setDate(dataBoleto.getDate() + Number(fatorData));
     dataBoleto.setTime(dataBoleto.getTime() + dataBoleto.getTimezoneOffset() - (3) * 60 * 60 * 1000);
 
@@ -396,7 +395,7 @@ exports.linhaDigitavel2CodBarras = (codigo) => {
 }
 
 /** 
- * Calcular o dígito verificador de toda a numeração do código de barras
+ * Calcula o dígito verificador de toda a numeração do código de barras
  * 
  * -------------
  * 
@@ -415,11 +414,84 @@ exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
     codigo.splice(posicaoCodigo, 1);
     codigo = codigo.join('');
 
-    if (mod == 10) {
+    if (mod === 10) {
         return this.calculaMod10(codigo);
-    } else if (mod == 11) {
+    } else if (mod === 11) {
         return this.calculaMod11(codigo);
     }
+}
+
+/** 
+ * Informa se o código de barras inserido é válido, calculando seu dígito verificador.
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * 
+ * -------------
+ * 
+ * @return {boolean} true = boleto válido / false = boleto inválido
+ */
+exports.validarCodigoComDV = (codigo) => {
+    codigo = codigo.replace(/[^0-9]/g, '');
+    let tipoCodigo = this.identificarTipoCodigo(codigo);
+    let tipoBoleto;
+
+    let resultado;
+
+    if (tipoCodigo === 'LINHA_DIGITAVEL') {
+        tipoBoleto = this.identificarTipoBoleto(codigo, 'LINHA_DIGITAVEL');
+
+        if (tipoBoleto == 'BANCO') {
+            const bloco1 = codigo.substr(0, 9) + this.calculaMod10(codigo.substr(0, 9));
+            const bloco2 = codigo.substr(10, 10) + this.calculaMod10(codigo.substr(10, 10));
+            const bloco3 = codigo.substr(21, 10) + this.calculaMod10(codigo.substr(21, 10));
+            const bloco4 = codigo.substr(32, 1);
+            const bloco5 = codigo.substr(33);
+
+            resultado = (bloco1 + bloco2 + bloco3 + bloco4 + bloco5).toString();
+        } else {
+            const identificacaoValorRealOuReferencia = this.identificarReferencia(codigo);
+            let bloco1;
+            let bloco2;
+            let bloco3;
+            let bloco4;
+
+            if (identificacaoValorRealOuReferencia.mod == 10) {
+                bloco1 = codigo.substr(0, 11) + this.calculaMod10(codigo.substr(0, 11));
+                bloco2 = codigo.substr(12, 11) + this.calculaMod10(codigo.substr(12, 11));
+                bloco3 = codigo.substr(24, 11) + this.calculaMod10(codigo.substr(24, 11));
+                bloco4 = codigo.substr(36, 11) + this.calculaMod10(codigo.substr(36, 11));
+            } else if (identificacaoValorRealOuReferencia.mod == 11) {
+                bloco1 = codigo.substr(0, 11) + this.calculaMod11(codigo.substr(0, 11));
+                bloco2 = codigo.substr(12, 11) + this.calculaMod11(codigo.substr(12, 11));
+                bloco3 = codigo.substr(24, 11) + this.calculaMod11(codigo.substr(24, 11));
+                bloco4 = codigo.substr(36, 11) + this.calculaMod11(codigo.substr(36, 11));
+            }
+
+            resultado = bloco1 + bloco2 + bloco3 + bloco4;
+        }
+    } else if (tipoCodigo === 'CODIGO_DE_BARRAS') {
+        tipoBoleto = this.identificarTipoBoleto(codigo, 'CODIGO_DE_BARRAS');
+
+        if (tipoBoleto == 'BANCO') {
+            const DV = this.calculaDVCodBarras(codigo, 4, 11);
+            resultado = codigo.substr(0, 4) + DV + codigo.substr(5);
+        } else {
+            const identificacaoValorRealOuReferencia = this.identificarReferencia(codigo);
+
+            resultado = codigo.split('');
+            resultado.splice(3, 1);
+            resultado = resultado.join('');
+
+            const DV = this.calculaDVCodBarras(codigo, 3, identificacaoValorRealOuReferencia.mod);
+            
+            resultado = resultado.substr(0, 3) + DV + resultado.substr(3);
+
+        }
+    }
+
+    return codigo === resultado;
 }
 
 /** 
@@ -541,8 +613,10 @@ exports.validarBoleto = (codigo) => {
     /** 
      * Boletos de cartão de crédito geralmente possuem 46 dígitos. É necessário adicionar mais um zero no final, para formar 47 caracteres 
      * Alguns boletos de cartão de crédito do Itaú possuem 36 dígitos. É necessário acrescentar 11 zeros no final.
-     */ 
-    if (codigo.length == 36 && codigo.length == 46) {
+     */
+    if (codigo.length == 36) {
+        codigo = codigo + '00000000000';
+    } else if (codigo.length == 46) {
         codigo = codigo + '0';
     }
 
@@ -554,6 +628,10 @@ exports.validarBoleto = (codigo) => {
         retorno.sucesso = false;
         retorno.codigoInput = codigo;
         retorno.mensagem = 'Este tipo de boleto deve possuir um código de barras 44 caracteres numéricos. Ou linha digitável de 48 caracteres numéricos.';
+    } else if (!this.validarCodigoComDV(codigo)) {
+        retorno.sucesso = false;
+        retorno.codigoInput = codigo;
+        retorno.mensagem = 'A validação do dígito verificador falhou. Tem certeza que inseriu a numeração correta?';
     } else {
         retorno.sucesso = true;
         retorno.codigoInput = codigo;
@@ -650,13 +728,11 @@ exports.calculaMod11 = (numero) => {
         digito = 0;
     }
 
-    // Se o resto da divisão for igual a 0 ou 1, o digito será 0
-    // Se for igual a 10, o dígito será 1 
-    if (digito === 0 || digito === 1) {
-        digito = 0;
-    } else if (digito === 10) {
+    // Se for igual a 0, 10 ou 11, o dígito será 1 
+    if (digito === 0 || digito === 10 || digito === 11) {
         digito = 1;
     }
+
     return digito;
 }
 
