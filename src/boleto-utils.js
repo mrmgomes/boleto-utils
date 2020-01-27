@@ -463,10 +463,22 @@ exports.validarCodigoComDV = (codigo) => {
                 bloco3 = codigo.substr(24, 11) + this.calculaMod10(codigo.substr(24, 11));
                 bloco4 = codigo.substr(36, 11) + this.calculaMod10(codigo.substr(36, 11));
             } else if (identificacaoValorRealOuReferencia.mod == 11) {
-                bloco1 = codigo.substr(0, 11) + this.calculaMod11(codigo.substr(0, 11));
-                bloco2 = codigo.substr(12, 11) + this.calculaMod11(codigo.substr(12, 11));
-                bloco3 = codigo.substr(24, 11) + this.calculaMod11(codigo.substr(24, 11));
-                bloco4 = codigo.substr(36, 11) + this.calculaMod11(codigo.substr(36, 11));
+                bloco1 = codigo.substr(0, 11);
+                bloco2 = codigo.substr(12, 11);
+                bloco3 = codigo.substr(24, 11);
+                bloco4 = codigo.substr(36, 11);
+
+                dv1 = parseInt(codigo.substr(11, 1));
+                dv2 = parseInt(codigo.substr(23, 1));
+                dv3 = parseInt(codigo.substr(35, 1));
+                dv4 = parseInt(codigo.substr(47, 1));
+                
+                valid = (this.calculaMod11(bloco1) == dv1 &&
+                        this.calculaMod11(bloco2) == dv2 &&
+                        this.calculaMod11(bloco3) == dv3 &&
+                        this.calculaMod11(bloco4) == dv4)
+
+                return valid;
             }
 
             resultado = bloco1 + bloco2 + bloco3 + bloco4;
@@ -709,29 +721,24 @@ exports.calculaMod10 = (numero) => {
  * @return {string} soma
  */
 exports.calculaMod11 = (numero) => {
+    // from: http://www.cjdinfo.com.br/publicacao-calculo-digito-verificador
     numero = numero.replace(/\D/g, '');
 
+    let sequencia = [4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
     let soma = 0;
-    let peso = 2;
-    const base = 9;
-    const contador = numero.length - 1;
-    for (let i = contador; i >= 0; i--) {
-        soma = soma + (parseInt(numero.substring(i, i + 1)) * peso);
-        if (peso < base) {
-            peso++;
-        } else {
-            peso = 2;
-        }
-    }
-    let digito = 11 - (soma % 11);
-    if (digito > 9) {
-        digito = 0;
+    let resto = 0;
+
+    for (let i = 0; i < 11; i++) {
+        let valor = parseInt(numero.substr(i, 1));
+        soma += valor * sequencia[i];
     }
 
-    // Se for igual a 0, 10 ou 11, o dígito será 1 
-    if (digito === 0 || digito === 10 || digito === 11) {
-        digito = 1;
-    }
+    soma *= 10;
+    console.log(soma);
+
+    resto = soma % 11;
+    let digito = resto;
+    if (resto == 10) digito = 0;
 
     return digito;
 }
