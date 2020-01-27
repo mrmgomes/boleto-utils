@@ -734,7 +734,6 @@ exports.calculaMod11 = (numero) => {
     }
 
     soma *= 10;
-    console.log(soma);
 
     resto = soma % 11;
     let digito = resto;
