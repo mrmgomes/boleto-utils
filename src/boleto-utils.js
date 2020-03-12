@@ -417,7 +417,7 @@ exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
     if (mod === 10) {
         return this.calculaMod10(codigo);
     } else if (mod === 11) {
-        return this.calculaMod11(codigo);
+        return this.calculaMod11SemMultiplicacao10(codigo);
     }
 }
 
@@ -740,6 +740,33 @@ exports.calculaMod11 = (numero) => {
     if (resto == 10) digito = 0;
 
     return digito;
+}
+
+/** 
+ * Calcula o dígito verificador de uma numeração a partir do módulo 11
+ * 
+ * -------------
+ * 
+ * @param {string} numero Numeração
+ * 
+ * -------------
+ * 
+ * @return {string} soma
+ */
+exports.calculaMod11SemMultiplicacao10 = (numero) => {
+    let sequencia = [2, 3, 4, 5, 6, 7, 8, 9];
+    let digit = 0;
+    let j = 0;
+    for (var i = x.length - 1; i >= 0; i--) {
+        if (i != 4) {
+            let mult = sequencia[j];
+            j++;
+            j %= sequencia.length;
+            digit += mult * parseInt(x.charAt(i));
+        }
+    }
+
+    return digit % 11;
 }
 
 /** 
