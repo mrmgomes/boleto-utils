@@ -432,9 +432,8 @@ exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
  * 
  * @return {boolean} true = boleto válido / false = boleto inválido
  */
-exports.validarCodigoComDV = (codigo) => {
+exports.validarCodigoComDV = (codigo, tipoCodigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
-    let tipoCodigo = this.identificarTipoCodigo(codigo);
     let tipoBoleto;
 
     let resultado;
@@ -489,6 +488,8 @@ exports.validarCodigoComDV = (codigo) => {
         if (tipoBoleto == 'BANCO') {
             const DV = this.calculaDVCodBarras(codigo, 4, 11);
             resultado = codigo.substr(0, 4) + DV + codigo.substr(5);
+            console.log(DV)
+            console.log(codigo)
         } else {
             const identificacaoValorRealOuReferencia = this.identificarReferencia(codigo);
 
@@ -497,7 +498,6 @@ exports.validarCodigoComDV = (codigo) => {
             resultado = resultado.join('');
 
             const DV = this.calculaDVCodBarras(codigo, 3, identificacaoValorRealOuReferencia.mod);
-            
             resultado = resultado.substr(0, 3) + DV + resultado.substr(3);
 
         }
@@ -618,7 +618,7 @@ exports.geraCodBarras = (codigo) => {
  * __Y__ | **35 a 35**  | `Dígito verificador do Bloco 3`
  * __Z__ | **47 a 47**  | `Dígito verificador do Bloco 4`
  */
-exports.validarBoleto = (codigo) => {
+exports.validarBoleto = (codigo, tipoCodigo) => {
     let retorno = {};
     codigo = codigo.replace(/[^0-9]/g, '');
 
@@ -640,7 +640,7 @@ exports.validarBoleto = (codigo) => {
         retorno.sucesso = false;
         retorno.codigoInput = codigo;
         retorno.mensagem = 'Este tipo de boleto deve possuir um código de barras 44 caracteres numéricos. Ou linha digitável de 48 caracteres numéricos.';
-    } else if (!this.validarCodigoComDV(codigo)) {
+    } else if (!this.validarCodigoComDV(codigo, tipoCodigo)) {
         retorno.sucesso = false;
         retorno.codigoInput = codigo;
         retorno.mensagem = 'A validação do dígito verificador falhou. Tem certeza que inseriu a numeração correta?';
@@ -648,8 +648,7 @@ exports.validarBoleto = (codigo) => {
         retorno.sucesso = true;
         retorno.codigoInput = codigo;
         retorno.mensagem = 'Boleto válido';
-        let tipoCodigo = this.identificarTipoCodigo(codigo);
-
+        
         switch (tipoCodigo) {
             case 'LINHA_DIGITAVEL':
                 retorno.tipoCodigoInput = 'LINHA_DIGITAVEL';
