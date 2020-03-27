@@ -753,7 +753,7 @@ exports.calculaMod11 = (numero) => {
  * 
  * @return {string} soma
  */
-exports.calculaMod11SemMultiplicacao10 = (numero) => {
+exports.calculaMod11SemMultiplicacao10 = (x) => {
     let sequencia = [2, 3, 4, 5, 6, 7, 8, 9];
     let digit = 0;
     let j = 0;
