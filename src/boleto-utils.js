@@ -488,8 +488,6 @@ exports.validarCodigoComDV = (codigo, tipoCodigo) => {
         if (tipoBoleto == 'BANCO') {
             const DV = this.calculaDVCodBarras(codigo, 4, 11);
             resultado = codigo.substr(0, 4) + DV + codigo.substr(5);
-            console.log(DV)
-            console.log(codigo)
         } else {
             const identificacaoValorRealOuReferencia = this.identificarReferencia(codigo);
 
