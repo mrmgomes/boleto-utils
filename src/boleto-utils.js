@@ -91,25 +91,25 @@ exports.identificarReferencia = (codigo) => {
         case '6':
             return {
                 mod: 10,
-                    efetivo: true
+                efetivo: true
             };
             break;
         case '7':
             return {
                 mod: 10,
-                    efetivo: false
+                efetivo: false
             };
             break;
         case '8':
             return {
                 mod: 11,
-                    efetivo: true
+                efetivo: true
             };
             break;
         case '9':
             return {
                 mod: 11,
-                    efetivo: false
+                efetivo: false
             };
             break;
         default:
@@ -417,7 +417,7 @@ exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
     if (mod === 10) {
         return this.calculaMod10(codigo);
     } else if (mod === 11) {
-        return this.calculaMod11SemMultiplicacao10(codigo);
+        return this.calculaMod11(codigo);
     }
 }
 
@@ -471,11 +471,11 @@ exports.validarCodigoComDV = (codigo, tipoCodigo) => {
                 dv2 = parseInt(codigo.substr(23, 1));
                 dv3 = parseInt(codigo.substr(35, 1));
                 dv4 = parseInt(codigo.substr(47, 1));
-                
+
                 valid = (this.calculaMod11(bloco1) == dv1 &&
-                        this.calculaMod11(bloco2) == dv2 &&
-                        this.calculaMod11(bloco3) == dv3 &&
-                        this.calculaMod11(bloco4) == dv4)
+                    this.calculaMod11(bloco2) == dv2 &&
+                    this.calculaMod11(bloco3) == dv3 &&
+                    this.calculaMod11(bloco4) == dv4)
 
                 return valid;
             }
@@ -646,7 +646,7 @@ exports.validarBoleto = (codigo, tipoCodigo) => {
         retorno.sucesso = true;
         retorno.codigoInput = codigo;
         retorno.mensagem = 'Boleto válido';
-        
+
         switch (tipoCodigo) {
             case 'LINHA_DIGITAVEL':
                 retorno.tipoCodigoInput = 'LINHA_DIGITAVEL';
@@ -715,56 +715,98 @@ exports.calculaMod10 = (numero) => {
  * 
  * -------------
  * 
- * @return {string} soma
+ * @return {string} digito
  */
-exports.calculaMod11 = (numero) => {
-    // from: http://www.cjdinfo.com.br/publicacao-calculo-digito-verificador
-    numero = numero.replace(/\D/g, '');
+// exports.calculaMod11 = (numero) => {
+//     // from: http://www.cjdinfo.com.br/publicacao-calculo-digito-verificador
+//     numero = numero.replace(/\D/g, '');
 
-    let sequencia = [4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-    let soma = 0;
-    let resto = 0;
+//     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+//     let soma = 0;
+//     let resto = 0;
 
-    for (let i = 0; i < 11; i++) {
-        let valor = parseInt(numero.substr(i, 1));
-        soma += valor * sequencia[i];
-    }
+//     for (let i = 0; i < 11; i++) {
+//         let valor = parseInt(numero.substr(i, 1));
+//         soma += valor * sequencia[i];
+//     }
 
-    soma *= 10;
+//     soma *= 10;
 
-    resto = soma % 11;
-    let digito = resto;
-    if (resto == 10) digito = 0;
+//     resto = soma % 11;
+//     let digito = resto;
+//     if (resto == 10) digito = 0;
 
-    return digito;
-}
+//     return digito;
+// }
 
 /** 
  * Calcula o dígito verificador de uma numeração a partir do módulo 11
  * 
  * -------------
  * 
- * @param {string} numero Numeração
+ * @param {string} x Numeração
  * 
  * -------------
  * 
- * @return {string} soma
+ * @return {string} digito
  */
-exports.calculaMod11SemMultiplicacao10 = (x) => {
-    let sequencia = [2, 3, 4, 5, 6, 7, 8, 9];
+exports.calculaMod11 = (x) => {
+    let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
     let digit = 0;
     let j = 0;
-    for (var i = x.length - 1; i >= 0; i--) {
-        if (i != 4) {
-            let mult = sequencia[j];
-            j++;
-            j %= sequencia.length;
-            digit += mult * parseInt(x.charAt(i));
-        }
+    let DAC = 0
+
+    //ITAU https://download.itau.com.br/bankline/layout_cobranca_400bytes_cnab_itau.pdf
+    for (var i = 0; i < x.length; i++) {
+        let mult = sequencia[j];
+        j++;
+        j %= sequencia.length;
+        digit += mult * parseInt(x.charAt(i));
     }
 
-    return digit % 11;
+    DAC = 11 - (digit % 11);
+
+    if (DAC == 0 || DAC == 1 || DAC == 10 || DAC == 11)
+        return 1;
+    else
+        return DAC;
 }
+
+// /** 
+//  * Calcula o dígito verificador de uma numeração a partir do módulo 11
+//  * 
+//  * -------------
+//  * 
+//  * @param {string} x Numeração
+//  * 
+//  * -------------
+//  * 
+//  * @return {string} digito
+//  */
+// exports.calculaMod11Concessionaria = (x) => {
+//     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
+//     let digit = 0;
+//     let j = 0;
+//     let DAC = 0;
+
+//     //FEBRABAN https://cmsportal.febraban.org.br/Arquivos/documentos/PDF/Layout%20-%20C%C3%B3digo%20de%20Barras%20-%20Vers%C3%A3o%205%20-%2001_08_2016.pdf
+//     for (var i = 0; i < x.length; i++) {
+//         let mult = sequencia[j];
+//         j++;
+//         j %= sequencia.length;
+//         digit += mult * parseInt(x.charAt(i));
+//     }
+
+//     DAC = digit % 11;
+
+//     if (DAC == 1)
+//         DAC = 0;
+//     if (DAC == 10)
+//         DAC = 1;
+
+//     return DAC;
+
+// }
 
 /** 
  * Função auxiliar para remover os zeros à esquerda dos valores detectados no código inserido
