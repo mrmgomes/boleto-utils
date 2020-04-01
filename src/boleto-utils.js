@@ -616,9 +616,11 @@ exports.geraCodBarras = (codigo) => {
  * __Y__ | **35 a 35**  | `Dígito verificador do Bloco 3`
  * __Z__ | **47 a 47**  | `Dígito verificador do Bloco 4`
  */
-exports.validarBoleto = (codigo, tipoCodigo) => {
+exports.validarBoleto = (codigo) => {
     let retorno = {};
     codigo = codigo.replace(/[^0-9]/g, '');
+
+    let tipoCodigo = this.identificarTipoCodigo(codigo);
 
     /** 
      * Boletos de cartão de crédito geralmente possuem 46 dígitos. É necessário adicionar mais um zero no final, para formar 47 caracteres 
