@@ -37,11 +37,11 @@ Função | Definição
 
 ---------------------------------------------------------
 ### 3. Exemplos de uso
-A princípio, a função `validarBoleto(codigo: string)` é a única que poderia ser utilizada para validar e trazer informações de um código de barras/linha digitável, portanto mostrarei apenas este exemplo. As demais funções estão documentadas acima e são autoexplicativas.
+A princípio, a função `validarBoleto(codigo: string, tipoCodigo: string)` é a única que poderia ser utilizada para validar e trazer informações de um código de barras/linha digitável, portanto mostrarei apenas este exemplo. As demais funções estão documentadas acima e são autoexplicativas.
 
 Exemplo #1: 
 ```javascript
-validarBoleto('23790448095616862379336011058009740430000124020');
+validarBoleto('23790448095616862379336011058009740430000124020', 'LINHA_DIGITAVEL');
 ```
 Retorno #1: 
 ```json
@@ -58,7 +58,7 @@ Retorno #1:
 ```
 Exemplo #2: 
 ```javascript
-validarBoleto('34196790600001000002220000005566385101214000');
+validarBoleto('34196790600001000002220000005566385101214000', 'CODIGO_DE_BARRAS);
 ```
 Retorno #2: 
 ```json

@@ -91,25 +91,25 @@ exports.identificarReferencia = (codigo) => {
         case '6':
             return {
                 mod: 10,
-                    efetivo: true
+                efetivo: true
             };
             break;
         case '7':
             return {
                 mod: 10,
-                    efetivo: false
+                efetivo: false
             };
             break;
         case '8':
             return {
                 mod: 11,
-                    efetivo: true
+                efetivo: true
             };
             break;
         case '9':
             return {
                 mod: 11,
-                    efetivo: false
+                efetivo: false
             };
             break;
         default:
@@ -432,9 +432,8 @@ exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
  * 
  * @return {boolean} true = boleto válido / false = boleto inválido
  */
-exports.validarCodigoComDV = (codigo) => {
+exports.validarCodigoComDV = (codigo, tipoCodigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
-    let tipoCodigo = this.identificarTipoCodigo(codigo);
     let tipoBoleto;
 
     let resultado;
@@ -463,10 +462,22 @@ exports.validarCodigoComDV = (codigo) => {
                 bloco3 = codigo.substr(24, 11) + this.calculaMod10(codigo.substr(24, 11));
                 bloco4 = codigo.substr(36, 11) + this.calculaMod10(codigo.substr(36, 11));
             } else if (identificacaoValorRealOuReferencia.mod == 11) {
-                bloco1 = codigo.substr(0, 11) + this.calculaMod11(codigo.substr(0, 11));
-                bloco2 = codigo.substr(12, 11) + this.calculaMod11(codigo.substr(12, 11));
-                bloco3 = codigo.substr(24, 11) + this.calculaMod11(codigo.substr(24, 11));
-                bloco4 = codigo.substr(36, 11) + this.calculaMod11(codigo.substr(36, 11));
+                bloco1 = codigo.substr(0, 11);
+                bloco2 = codigo.substr(12, 11);
+                bloco3 = codigo.substr(24, 11);
+                bloco4 = codigo.substr(36, 11);
+
+                dv1 = parseInt(codigo.substr(11, 1));
+                dv2 = parseInt(codigo.substr(23, 1));
+                dv3 = parseInt(codigo.substr(35, 1));
+                dv4 = parseInt(codigo.substr(47, 1));
+
+                valid = (this.calculaMod11(bloco1) == dv1 &&
+                    this.calculaMod11(bloco2) == dv2 &&
+                    this.calculaMod11(bloco3) == dv3 &&
+                    this.calculaMod11(bloco4) == dv4)
+
+                return valid;
             }
 
             resultado = bloco1 + bloco2 + bloco3 + bloco4;
@@ -485,7 +496,6 @@ exports.validarCodigoComDV = (codigo) => {
             resultado = resultado.join('');
 
             const DV = this.calculaDVCodBarras(codigo, 3, identificacaoValorRealOuReferencia.mod);
-            
             resultado = resultado.substr(0, 3) + DV + resultado.substr(3);
 
         }
@@ -610,6 +620,8 @@ exports.validarBoleto = (codigo) => {
     let retorno = {};
     codigo = codigo.replace(/[^0-9]/g, '');
 
+    let tipoCodigo = this.identificarTipoCodigo(codigo);
+
     /** 
      * Boletos de cartão de crédito geralmente possuem 46 dígitos. É necessário adicionar mais um zero no final, para formar 47 caracteres 
      * Alguns boletos de cartão de crédito do Itaú possuem 36 dígitos. É necessário acrescentar 11 zeros no final.
@@ -628,7 +640,7 @@ exports.validarBoleto = (codigo) => {
         retorno.sucesso = false;
         retorno.codigoInput = codigo;
         retorno.mensagem = 'Este tipo de boleto deve possuir um código de barras 44 caracteres numéricos. Ou linha digitável de 48 caracteres numéricos.';
-    } else if (!this.validarCodigoComDV(codigo)) {
+    } else if (!this.validarCodigoComDV(codigo, tipoCodigo)) {
         retorno.sucesso = false;
         retorno.codigoInput = codigo;
         retorno.mensagem = 'A validação do dígito verificador falhou. Tem certeza que inseriu a numeração correta?';
@@ -636,7 +648,6 @@ exports.validarBoleto = (codigo) => {
         retorno.sucesso = true;
         retorno.codigoInput = codigo;
         retorno.mensagem = 'Boleto válido';
-        let tipoCodigo = this.identificarTipoCodigo(codigo);
 
         switch (tipoCodigo) {
             case 'LINHA_DIGITAVEL':
@@ -706,35 +717,98 @@ exports.calculaMod10 = (numero) => {
  * 
  * -------------
  * 
- * @return {string} soma
+ * @return {string} digito
  */
-exports.calculaMod11 = (numero) => {
-    numero = numero.replace(/\D/g, '');
+// exports.calculaMod11 = (numero) => {
+//     // from: http://www.cjdinfo.com.br/publicacao-calculo-digito-verificador
+//     numero = numero.replace(/\D/g, '');
 
-    let soma = 0;
-    let peso = 2;
-    const base = 9;
-    const contador = numero.length - 1;
-    for (let i = contador; i >= 0; i--) {
-        soma = soma + (parseInt(numero.substring(i, i + 1)) * peso);
-        if (peso < base) {
-            peso++;
-        } else {
-            peso = 2;
-        }
-    }
-    let digito = 11 - (soma % 11);
-    if (digito > 9) {
-        digito = 0;
+//     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+//     let soma = 0;
+//     let resto = 0;
+
+//     for (let i = 0; i < 11; i++) {
+//         let valor = parseInt(numero.substr(i, 1));
+//         soma += valor * sequencia[i];
+//     }
+
+//     soma *= 10;
+
+//     resto = soma % 11;
+//     let digito = resto;
+//     if (resto == 10) digito = 0;
+
+//     return digito;
+// }
+
+/** 
+ * Calcula o dígito verificador de uma numeração a partir do módulo 11
+ * 
+ * -------------
+ * 
+ * @param {string} x Numeração
+ * 
+ * -------------
+ * 
+ * @return {string} digito
+ */
+exports.calculaMod11 = (x) => {
+    let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
+    let digit = 0;
+    let j = 0;
+    let DAC = 0
+
+    //ITAU https://download.itau.com.br/bankline/layout_cobranca_400bytes_cnab_itau.pdf
+    for (var i = 0; i < x.length; i++) {
+        let mult = sequencia[j];
+        j++;
+        j %= sequencia.length;
+        digit += mult * parseInt(x.charAt(i));
     }
 
-    // Se for igual a 0, 10 ou 11, o dígito será 1 
-    if (digito === 0 || digito === 10 || digito === 11) {
-        digito = 1;
-    }
+    DAC = 11 - (digit % 11);
 
-    return digito;
+    if (DAC == 0 || DAC == 1 || DAC == 10 || DAC == 11)
+        return 1;
+    else
+        return DAC;
 }
+
+// /** 
+//  * Calcula o dígito verificador de uma numeração a partir do módulo 11
+//  * 
+//  * -------------
+//  * 
+//  * @param {string} x Numeração
+//  * 
+//  * -------------
+//  * 
+//  * @return {string} digito
+//  */
+// exports.calculaMod11Concessionaria = (x) => {
+//     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
+//     let digit = 0;
+//     let j = 0;
+//     let DAC = 0;
+
+//     //FEBRABAN https://cmsportal.febraban.org.br/Arquivos/documentos/PDF/Layout%20-%20C%C3%B3digo%20de%20Barras%20-%20Vers%C3%A3o%205%20-%2001_08_2016.pdf
+//     for (var i = 0; i < x.length; i++) {
+//         let mult = sequencia[j];
+//         j++;
+//         j %= sequencia.length;
+//         digit += mult * parseInt(x.charAt(i));
+//     }
+
+//     DAC = digit % 11;
+
+//     if (DAC == 1)
+//         DAC = 0;
+//     if (DAC == 10)
+//         DAC = 1;
+
+//     return DAC;
+
+// }
 
 /** 
  * Função auxiliar para remover os zeros à esquerda dos valores detectados no código inserido
