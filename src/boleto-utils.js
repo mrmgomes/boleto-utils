@@ -41,13 +41,14 @@ exports.identificarTipoCodigo = (codigo) => {
  * @return {string} CONVENIO_ENERGIA_ELETRICA_E_GAS
  * @return {string} CONVENIO_TELECOMUNICACOES
  * @return {string} OUTROS
+ * @return {string} CARTAO_DE_CREDITO
  */
 exports.identificarTipoBoleto = (codigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
 
     if (typeof codigo !== 'string') throw new TypeError('Insira uma string válida!');
     
-    if (codigo.substr(-14) == '00000000000000') {
+    if (codigo.substr(-14) == '00000000000000' || codigo.substr(5,14) == '00000000000000') {
         return 'CARTAO_DE_CREDITO';
     } else if (codigo.substr(0, 1) == '8') {
         if (codigo.substr(1, 1) == '1') {
@@ -419,7 +420,11 @@ exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
     if (mod === 10) {
         return this.calculaMod10(codigo);
     } else if (mod === 11) {
-        return this.calculaMod11(codigo);
+        if (posicaoCodigo === 4) {// tipoBoleto BANCO ou CARTAO_DE_CREDITO
+            return this.calculaMod11(codigo);
+        } else if(posicaoCodigo === 3) {// tipoBoleto diferente de BANCO ou CARTAO_DE_CREDITO
+            return this.calculaMod11Concessionaria(codigo);
+        }
     }
 }
 
@@ -485,7 +490,7 @@ exports.validarCodigoComDV = (codigo, tipoCodigo) => {
             resultado = bloco1 + bloco2 + bloco3 + bloco4;
         }
     } else if (tipoCodigo === 'CODIGO_DE_BARRAS') {
-        tipoBoleto = this.identificarTipoBoleto(codigo, 'CODIGO_DE_BARRAS');
+        tipoBoleto = this.identificarTipoBoleto(codigo);
 
         if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
             const DV = this.calculaDVCodBarras(codigo, 4, 11);
@@ -776,41 +781,41 @@ exports.calculaMod11 = (x) => {
         return DAC;
 }
 
-// /** 
-//  * Calcula o dígito verificador de uma numeração a partir do módulo 11
-//  * 
-//  * -------------
-//  * 
-//  * @param {string} x Numeração
-//  * 
-//  * -------------
-//  * 
-//  * @return {string} digito
-//  */
-// exports.calculaMod11Concessionaria = (x) => {
-//     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
-//     let digit = 0;
-//     let j = 0;
-//     let DAC = 0;
+/** 
+ * Calcula o dígito verificador de uma numeração a partir do módulo 11
+ * 
+ * -------------
+ * 
+ * @param {string} x Numeração
+ * 
+ * -------------
+ * 
+ * @return {string} digito
+ */
+exports.calculaMod11Concessionaria = (x) => {
+    let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
+    let digit = 0;
+    let j = 0;
+    let DAC = 0;
 
-//     //FEBRABAN https://cmsportal.febraban.org.br/Arquivos/documentos/PDF/Layout%20-%20C%C3%B3digo%20de%20Barras%20-%20Vers%C3%A3o%205%20-%2001_08_2016.pdf
-//     for (var i = 0; i < x.length; i++) {
-//         let mult = sequencia[j];
-//         j++;
-//         j %= sequencia.length;
-//         digit += mult * parseInt(x.charAt(i));
-//     }
+    //FEBRABAN https://cmsportal.febraban.org.br/Arquivos/documentos/PDF/Layout%20-%20C%C3%B3digo%20de%20Barras%20-%20Vers%C3%A3o%205%20-%2001_08_2016.pdf
+    for (var i = 0; i < x.length; i++) {
+        let mult = sequencia[j];
+        j++;
+        j %= sequencia.length;
+        digit += mult * parseInt(x.charAt(i));
+    }
 
-//     DAC = digit % 11;
+    DAC = digit % 11;
 
-//     if (DAC == 1)
-//         DAC = 0;
-//     if (DAC == 10)
-//         DAC = 1;
+    if (DAC == 1)
+        DAC = 0;
+    if (DAC == 10)
+        DAC = 1;
 
-//     return DAC;
+    return DAC;
 
-// }
+}
 
 /** 
  * Função auxiliar para remover os zeros à esquerda dos valores detectados no código inserido
