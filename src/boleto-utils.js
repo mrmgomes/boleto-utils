@@ -47,8 +47,8 @@ exports.identificarTipoBoleto = (codigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
 
     if (typeof codigo !== 'string') throw new TypeError('Insira uma string válida!');
-    
-    if (codigo.substr(-14) == '00000000000000' || codigo.substr(5,14) == '00000000000000') {
+
+    if (codigo.substr(-14) == '00000000000000' || codigo.substr(5, 14) == '00000000000000') {
         return 'CARTAO_DE_CREDITO';
     } else if (codigo.substr(0, 1) == '8') {
         if (codigo.substr(1, 1) == '1') {
@@ -65,7 +65,7 @@ exports.identificarTipoBoleto = (codigo) => {
             return 'OUTROS';
         } else if (codigo.substr(1, 1) == '7') {
             return 'ARRECADACAO_TAXAS_DE_TRANSITO';
-        } 
+        }
     } else {
         return 'BANCO';
     }
@@ -420,11 +420,7 @@ exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
     if (mod === 10) {
         return this.calculaMod10(codigo);
     } else if (mod === 11) {
-        if (posicaoCodigo === 4) {// tipoBoleto BANCO ou CARTAO_DE_CREDITO
-            return this.calculaMod11(codigo);
-        } else if(posicaoCodigo === 3) {// tipoBoleto diferente de BANCO ou CARTAO_DE_CREDITO
-            return this.calculaMod11(codigo);
-        }
+        return this.calculaMod11(codigo);
     }
 }
 
@@ -750,7 +746,7 @@ exports.calculaMod11 = (x) => {
 
     DAC = digit % 11;
 
-    if (DAC== 0 || DAC == 1)
+    if (DAC == 0 || DAC == 1)
         return 0;
     if (DAC == 10)
         return 1;
