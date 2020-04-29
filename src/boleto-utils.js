@@ -423,7 +423,7 @@ exports.calculaDVCodBarras = (codigo, posicaoCodigo, mod) => {
         if (posicaoCodigo === 4) {// tipoBoleto BANCO ou CARTAO_DE_CREDITO
             return this.calculaMod11(codigo);
         } else if(posicaoCodigo === 3) {// tipoBoleto diferente de BANCO ou CARTAO_DE_CREDITO
-            return this.calculaMod11Concessionaria(codigo);
+            return this.calculaMod11(codigo);
         }
     }
 }
@@ -474,12 +474,20 @@ exports.validarCodigoComDV = (codigo, tipoCodigo) => {
                 bloco3 = codigo.substr(24, 11);
                 bloco4 = codigo.substr(36, 11);
 
-                dv1 = parseInt(codigo.substr(11, 1));
-                dv2 = parseInt(codigo.substr(23, 1));
-                dv3 = parseInt(codigo.substr(35, 1));
-                dv4 = parseInt(codigo.substr(47, 1));
+                let dv1 = parseInt(codigo.substr(11, 1));
+                let dv2 = parseInt(codigo.substr(23, 1));
+                let dv3 = parseInt(codigo.substr(35, 1));
+                let dv4 = parseInt(codigo.substr(47, 1));
+                //console.log(dv1)
+                //console.log(this.calculaMod11(bloco1))
+                //console.log(dv2)
+                //console.log(this.calculaMod11(bloco2))
+                //console.log(dv3)
+                //console.log(this.calculaMod11(bloco3))
+                //console.log(dv4)
+                //console.log(this.calculaMod11(bloco4))
 
-                valid = (this.calculaMod11(bloco1) == dv1 &&
+                let valid = (this.calculaMod11(bloco1) == dv1 &&
                     this.calculaMod11(bloco2) == dv2 &&
                     this.calculaMod11(bloco3) == dv3 &&
                     this.calculaMod11(bloco4) == dv4)
@@ -720,39 +728,6 @@ exports.calculaMod10 = (numero) => {
  * 
  * -------------
  * 
- * @param {string} numero Numeração
- * 
- * -------------
- * 
- * @return {string} digito
- */
-// exports.calculaMod11 = (numero) => {
-//     // from: http://www.cjdinfo.com.br/publicacao-calculo-digito-verificador
-//     numero = numero.replace(/\D/g, '');
-
-//     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-//     let soma = 0;
-//     let resto = 0;
-
-//     for (let i = 0; i < 11; i++) {
-//         let valor = parseInt(numero.substr(i, 1));
-//         soma += valor * sequencia[i];
-//     }
-
-//     soma *= 10;
-
-//     resto = soma % 11;
-//     let digito = resto;
-//     if (resto == 10) digito = 0;
-
-//     return digito;
-// }
-
-/** 
- * Calcula o dígito verificador de uma numeração a partir do módulo 11
- * 
- * -------------
- * 
  * @param {string} x Numeração
  * 
  * -------------
@@ -760,39 +735,6 @@ exports.calculaMod10 = (numero) => {
  * @return {string} digito
  */
 exports.calculaMod11 = (x) => {
-    let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
-    let digit = 0;
-    let j = 0;
-    let DAC = 0
-
-    //ITAU https://download.itau.com.br/bankline/layout_cobranca_400bytes_cnab_itau.pdf
-    for (var i = 0; i < x.length; i++) {
-        let mult = sequencia[j];
-        j++;
-        j %= sequencia.length;
-        digit += mult * parseInt(x.charAt(i));
-    }
-
-    DAC = 11 - (digit % 11);
-
-    if (DAC == 0 || DAC == 1 || DAC == 10 || DAC == 11)
-        return 1;
-    else
-        return DAC;
-}
-
-/** 
- * Calcula o dígito verificador de uma numeração a partir do módulo 11
- * 
- * -------------
- * 
- * @param {string} x Numeração
- * 
- * -------------
- * 
- * @return {string} digito
- */
-exports.calculaMod11Concessionaria = (x) => {
     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
     let digit = 0;
     let j = 0;
@@ -808,12 +750,12 @@ exports.calculaMod11Concessionaria = (x) => {
 
     DAC = digit % 11;
 
-    if (DAC == 1)
-        DAC = 0;
+    if (DAC== 0 || DAC == 1)
+        return 0;
     if (DAC == 10)
-        DAC = 1;
+        return 1;
 
-    return DAC;
+    return (11 - DAC);
 
 }
 
