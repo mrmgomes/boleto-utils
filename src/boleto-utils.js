@@ -142,7 +142,7 @@ exports.identificarData = (codigo, tipoCodigo) => {
     dataBoleto.setFullYear(1997);
     dataBoleto.setMonth(9);
     dataBoleto.setDate(7);
-    dataBoleto.setHours(23, 54, 59);
+    dataBoleto.setHours(23, 54, 59, 0);
 
     if (tipoCodigo === 'CODIGO_DE_BARRAS') {
         if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
@@ -157,9 +157,11 @@ exports.identificarData = (codigo, tipoCodigo) => {
             fatorData = '0';
         }
     }
-
+    
     dataBoleto.setDate(dataBoleto.getDate() + Number(fatorData));
     dataBoleto.setTime(dataBoleto.getTime() + dataBoleto.getTimezoneOffset() - (3) * 60 * 60 * 1000);
+    dataBoleto.setMilliseconds(0);
+
 
     return dataBoleto;
 }
