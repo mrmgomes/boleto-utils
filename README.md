@@ -1,4 +1,4 @@
-![tests](https://github.com/edniemeyer/boleto-utils/workflows/Node.js%20CI/badge.svg)
+![tests](https://github.com/edniemeyer/boleto-utils/workflows/tests/badge.svg)
 # boleto-utils
 Biblioteca com funções úteis para a validação de todos os tipos de boleto
 
