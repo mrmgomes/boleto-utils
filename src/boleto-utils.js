@@ -133,16 +133,12 @@ exports.identificarReferencia = (codigo) => {
  * @return {Date} dataBoleto
  */
 exports.identificarData = (codigo, tipoCodigo) => {
+    var moment = require('moment-timezone');
     codigo = codigo.replace(/[^0-9]/g, '');
     const tipoBoleto = this.identificarTipoBoleto(codigo);
 
     let fatorData = '';
-    let dataBoleto = new Date();
-
-    dataBoleto.setFullYear(1997);
-    dataBoleto.setMonth(9);
-    dataBoleto.setDate(7);
-    dataBoleto.setHours(23, 54, 59, 0);
+    let dataBoleto = moment.tz("1997-10-07 20:54:59.000Z", "UTC");
 
     if (tipoCodigo === 'CODIGO_DE_BARRAS') {
         if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
@@ -157,13 +153,10 @@ exports.identificarData = (codigo, tipoCodigo) => {
             fatorData = '0';
         }
     }
-    
-    dataBoleto.setDate(dataBoleto.getDate() + Number(fatorData));
-    dataBoleto.setTime(dataBoleto.getTime() + dataBoleto.getTimezoneOffset() - (3) * 60 * 60 * 1000);
-    dataBoleto.setMilliseconds(0);
 
+    dataBoleto.add(Number(fatorData), 'days');
 
-    return dataBoleto;
+    return dataBoleto.toDate();
 }
 
 /** 
