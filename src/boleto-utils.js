@@ -11,9 +11,9 @@
  * @return {string} LINHA_DIGITAVEL
  */
 exports.identificarTipoCodigo = (codigo) => {
-    codigo = codigo.replace(/[^0-9]/g, '');
-
     if (typeof codigo !== 'string') throw new TypeError('Insira uma string válida!');
+
+    codigo = codigo.replace(/[^0-9]/g, '');
 
     if (codigo.length == 44) {
         return 'CODIGO_DE_BARRAS'
@@ -41,13 +41,16 @@ exports.identificarTipoCodigo = (codigo) => {
  * @return {string} CONVENIO_ENERGIA_ELETRICA_E_GAS
  * @return {string} CONVENIO_TELECOMUNICACOES
  * @return {string} OUTROS
+ * @return {string} CARTAO_DE_CREDITO
  */
 exports.identificarTipoBoleto = (codigo) => {
     codigo = codigo.replace(/[^0-9]/g, '');
 
     if (typeof codigo !== 'string') throw new TypeError('Insira uma string válida!');
 
-    if (codigo.substr(0, 1) == '8') {
+    if (codigo.substr(-14) == '00000000000000' || codigo.substr(5, 14) == '00000000000000') {
+        return 'CARTAO_DE_CREDITO';
+    } else if (codigo.substr(0, 1) == '8') {
         if (codigo.substr(1, 1) == '1') {
             return 'ARRECADACAO_PREFEITURA';
         } else if (codigo.substr(1, 1) == '2') {
@@ -130,35 +133,30 @@ exports.identificarReferencia = (codigo) => {
  * @return {Date} dataBoleto
  */
 exports.identificarData = (codigo, tipoCodigo) => {
+    var moment = require('moment-timezone');
     codigo = codigo.replace(/[^0-9]/g, '');
     const tipoBoleto = this.identificarTipoBoleto(codigo);
 
     let fatorData = '';
-    let dataBoleto = new Date();
-
-    dataBoleto.setFullYear(1997);
-    dataBoleto.setMonth(9);
-    dataBoleto.setDate(7);
-    dataBoleto.setHours(23, 54, 59);
+    let dataBoleto = moment.tz("1997-10-07 20:54:59.000Z", "UTC");
 
     if (tipoCodigo === 'CODIGO_DE_BARRAS') {
-        if (tipoBoleto == 'BANCO') {
+        if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
             fatorData = codigo.substr(5, 4)
         } else {
             fatorData = '0';
         }
     } else if (tipoCodigo === 'LINHA_DIGITAVEL') {
-        if (tipoBoleto == 'BANCO') {
+        if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
             fatorData = codigo.substr(33, 4)
         } else {
             fatorData = '0';
         }
     }
 
-    dataBoleto.setDate(dataBoleto.getDate() + Number(fatorData));
-    dataBoleto.setTime(dataBoleto.getTime() + dataBoleto.getTimezoneOffset() - (3) * 60 * 60 * 1000);
+    dataBoleto.add(Number(fatorData), 'days');
 
-    return dataBoleto;
+    return dataBoleto.toDate();
 }
 
 /** 
@@ -226,7 +224,7 @@ exports.identificarValor = (codigo, tipoCodigo) => {
     let valorFinal;
 
     if (tipoCodigo == 'CODIGO_DE_BARRAS') {
-        if (tipoBoleto == 'BANCO') {
+        if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
             valorBoleto = codigo.substr(9, 10);
             valorFinal = valorBoleto.substr(0, 8) + '.' + valorBoleto.substr(8, 2);
 
@@ -240,7 +238,7 @@ exports.identificarValor = (codigo, tipoCodigo) => {
         }
 
     } else if (tipoCodigo == 'LINHA_DIGITAVEL') {
-        if (tipoBoleto == 'BANCO') {
+        if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
             valorBoleto = codigo.substr(37);
             valorFinal = valorBoleto.substr(0, 8) + '.' + valorBoleto.substr(8, 2);
 
@@ -301,7 +299,7 @@ exports.codBarras2LinhaDigitavel = (codigo, formatada) => {
 
     let resultado = '';
 
-    if (tipoBoleto == 'BANCO') {
+    if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
         const novaLinha = codigo.substr(0, 4) + codigo.substr(19, 25) + codigo.substr(4, 1) + codigo.substr(5, 14);
 
         const bloco1 = novaLinha.substr(0, 9) + this.calculaMod10(novaLinha.substr(0, 9));
@@ -372,7 +370,7 @@ exports.linhaDigitavel2CodBarras = (codigo) => {
 
     let resultado = '';
 
-    if (tipoBoleto == 'BANCO') {
+    if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
         resultado = codigo.substr(0, 4) +
             codigo.substr(32, 1) +
             codigo.substr(33, 14) +
@@ -441,7 +439,7 @@ exports.validarCodigoComDV = (codigo, tipoCodigo) => {
     if (tipoCodigo === 'LINHA_DIGITAVEL') {
         tipoBoleto = this.identificarTipoBoleto(codigo, 'LINHA_DIGITAVEL');
 
-        if (tipoBoleto == 'BANCO') {
+        if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
             const bloco1 = codigo.substr(0, 9) + this.calculaMod10(codigo.substr(0, 9));
             const bloco2 = codigo.substr(10, 10) + this.calculaMod10(codigo.substr(10, 10));
             const bloco3 = codigo.substr(21, 10) + this.calculaMod10(codigo.substr(21, 10));
@@ -467,12 +465,20 @@ exports.validarCodigoComDV = (codigo, tipoCodigo) => {
                 bloco3 = codigo.substr(24, 11);
                 bloco4 = codigo.substr(36, 11);
 
-                dv1 = parseInt(codigo.substr(11, 1));
-                dv2 = parseInt(codigo.substr(23, 1));
-                dv3 = parseInt(codigo.substr(35, 1));
-                dv4 = parseInt(codigo.substr(47, 1));
+                let dv1 = parseInt(codigo.substr(11, 1));
+                let dv2 = parseInt(codigo.substr(23, 1));
+                let dv3 = parseInt(codigo.substr(35, 1));
+                let dv4 = parseInt(codigo.substr(47, 1));
+                //console.log(dv1)
+                //console.log(this.calculaMod11(bloco1))
+                //console.log(dv2)
+                //console.log(this.calculaMod11(bloco2))
+                //console.log(dv3)
+                //console.log(this.calculaMod11(bloco3))
+                //console.log(dv4)
+                //console.log(this.calculaMod11(bloco4))
 
-                valid = (this.calculaMod11(bloco1) == dv1 &&
+                let valid = (this.calculaMod11(bloco1) == dv1 &&
                     this.calculaMod11(bloco2) == dv2 &&
                     this.calculaMod11(bloco3) == dv3 &&
                     this.calculaMod11(bloco4) == dv4)
@@ -483,9 +489,9 @@ exports.validarCodigoComDV = (codigo, tipoCodigo) => {
             resultado = bloco1 + bloco2 + bloco3 + bloco4;
         }
     } else if (tipoCodigo === 'CODIGO_DE_BARRAS') {
-        tipoBoleto = this.identificarTipoBoleto(codigo, 'CODIGO_DE_BARRAS');
+        tipoBoleto = this.identificarTipoBoleto(codigo);
 
-        if (tipoBoleto == 'BANCO') {
+        if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
             const DV = this.calculaDVCodBarras(codigo, 4, 11);
             resultado = codigo.substr(0, 4) + DV + codigo.substr(5);
         } else {
@@ -617,10 +623,11 @@ exports.geraCodBarras = (codigo) => {
  * __Z__ | **47 a 47**  | `Dígito verificador do Bloco 4`
  */
 exports.validarBoleto = (codigo) => {
+    let tipoCodigo = this.identificarTipoCodigo(codigo);
+
     let retorno = {};
     codigo = codigo.replace(/[^0-9]/g, '');
 
-    let tipoCodigo = this.identificarTipoCodigo(codigo);
 
     /** 
      * Boletos de cartão de crédito geralmente possuem 46 dígitos. É necessário adicionar mais um zero no final, para formar 47 caracteres 
@@ -713,39 +720,6 @@ exports.calculaMod10 = (numero) => {
  * 
  * -------------
  * 
- * @param {string} numero Numeração
- * 
- * -------------
- * 
- * @return {string} digito
- */
-// exports.calculaMod11 = (numero) => {
-//     // from: http://www.cjdinfo.com.br/publicacao-calculo-digito-verificador
-//     numero = numero.replace(/\D/g, '');
-
-//     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-//     let soma = 0;
-//     let resto = 0;
-
-//     for (let i = 0; i < 11; i++) {
-//         let valor = parseInt(numero.substr(i, 1));
-//         soma += valor * sequencia[i];
-//     }
-
-//     soma *= 10;
-
-//     resto = soma % 11;
-//     let digito = resto;
-//     if (resto == 10) digito = 0;
-
-//     return digito;
-// }
-
-/** 
- * Calcula o dígito verificador de uma numeração a partir do módulo 11
- * 
- * -------------
- * 
  * @param {string} x Numeração
  * 
  * -------------
@@ -756,9 +730,9 @@ exports.calculaMod11 = (x) => {
     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
     let digit = 0;
     let j = 0;
-    let DAC = 0
+    let DAC = 0;
 
-    //ITAU https://download.itau.com.br/bankline/layout_cobranca_400bytes_cnab_itau.pdf
+    //FEBRABAN https://cmsportal.febraban.org.br/Arquivos/documentos/PDF/Layout%20-%20C%C3%B3digo%20de%20Barras%20-%20Vers%C3%A3o%205%20-%2001_08_2016.pdf
     for (var i = 0; i < x.length; i++) {
         let mult = sequencia[j];
         j++;
@@ -766,49 +740,16 @@ exports.calculaMod11 = (x) => {
         digit += mult * parseInt(x.charAt(i));
     }
 
-    DAC = 11 - (digit % 11);
+    DAC = digit % 11;
 
-    if (DAC == 0 || DAC == 1 || DAC == 10 || DAC == 11)
+    if (DAC == 0 || DAC == 1)
+        return 0;
+    if (DAC == 10)
         return 1;
-    else
-        return DAC;
+
+    return (11 - DAC);
+
 }
-
-// /** 
-//  * Calcula o dígito verificador de uma numeração a partir do módulo 11
-//  * 
-//  * -------------
-//  * 
-//  * @param {string} x Numeração
-//  * 
-//  * -------------
-//  * 
-//  * @return {string} digito
-//  */
-// exports.calculaMod11Concessionaria = (x) => {
-//     let sequencia = [4, 3, 2, 9, 8, 7, 6, 5];
-//     let digit = 0;
-//     let j = 0;
-//     let DAC = 0;
-
-//     //FEBRABAN https://cmsportal.febraban.org.br/Arquivos/documentos/PDF/Layout%20-%20C%C3%B3digo%20de%20Barras%20-%20Vers%C3%A3o%205%20-%2001_08_2016.pdf
-//     for (var i = 0; i < x.length; i++) {
-//         let mult = sequencia[j];
-//         j++;
-//         j %= sequencia.length;
-//         digit += mult * parseInt(x.charAt(i));
-//     }
-
-//     DAC = digit % 11;
-
-//     if (DAC == 1)
-//         DAC = 0;
-//     if (DAC == 10)
-//         DAC = 1;
-
-//     return DAC;
-
-// }
 
 /** 
  * Função auxiliar para remover os zeros à esquerda dos valores detectados no código inserido

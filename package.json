@@ -1,8 +1,11 @@
 {
   "name": "@mrmgomes/boleto-utils",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Biblioteca com funções úteis para a validação de todos os tipos de boleto",
   "main": "./src/boleto-utils.js",
+  "scripts": {
+    "test": "mocha"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mrmgomes/boleto-utils.git"
@@ -25,5 +28,12 @@
   "bugs": {
     "url": "https://github.com/mrmgomes/boleto-utils/issues"
   },
-  "homepage": "https://github.com/mrmgomes/boleto-utils#readme"
+  "homepage": "https://github.com/mrmgomes/boleto-utils#readme",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^8.0.1"
+  },
+  "dependencies": {
+    "moment-timezone": "^0.5.31"
+  }
 }
