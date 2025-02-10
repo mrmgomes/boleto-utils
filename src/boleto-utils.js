@@ -120,25 +120,11 @@ exports.identificarReferencia = (codigo) => {
     }
 }
 
-/** 
- * Identifica o fator da data de vencimento do boleto
- * 
- * -------------
- * 
- * @param {string} codigo Numeração do boleto
- * @param {string} tipoCodigo tipo de código inserido (CODIGO_DE_BARRAS / LINHA_DIGITAVEL)
- * 
- * -------------
- * 
- * @return {Date} dataBoleto
- */
-exports.identificarData = (codigo, tipoCodigo) => {
-    var moment = require('moment-timezone');
+exports.obtemFatorData = ({ codigo, tipoCodigo }) => {
     codigo = codigo.replace(/[^0-9]/g, '');
     const tipoBoleto = this.identificarTipoBoleto(codigo);
 
-    let fatorData = '';
-    let dataBoleto = moment.tz("1997-10-07 20:54:59.000Z", "UTC");
+    let fatorData = ''
 
     if (tipoCodigo === 'CODIGO_DE_BARRAS') {
         if (tipoBoleto == 'BANCO' || tipoBoleto == 'CARTAO_DE_CREDITO') {
@@ -153,6 +139,51 @@ exports.identificarData = (codigo, tipoCodigo) => {
             fatorData = '0';
         }
     }
+
+    return fatorData
+}
+
+/** 
+ * Identifica o fator da data de vencimento do boleto
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * @param {string} tipoCodigo tipo de código inserido (CODIGO_DE_BARRAS / LINHA_DIGITAVEL)
+ * 
+ * -------------
+ * 
+ * @return {Date} dataBoleto
+ */
+exports.identificarData = (codigo, tipoCodigo) => {
+    var moment = require('moment-timezone');
+
+    let dataBoleto = moment.tz("1997-10-07 20:54:59.000Z", "UTC");
+
+    const fatorData = this.obtemFatorData({ codigo, tipoCodigo })
+
+    dataBoleto.add(Number(fatorData), 'days');
+
+    return dataBoleto.toDate();
+}
+
+/** 
+ * Identifica o fator da data de vencimento do boleto após 22/05/2025
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * @param {string} tipoCodigo tipo de código inserido (CODIGO_DE_BARRAS / LINHA_DIGITAVEL)
+ * 
+ * -------------
+ * 
+ * @return {Date} dataBoleto
+ */
+exports.identificarDataApos22022025 = (codigo, tipoCodigo) => {
+    var moment = require('moment-timezone');
+
+    let fatorData = this.obtemFatorData({ codigo, tipoCodigo });
+    let dataBoleto = moment.tz("2025-02-22 20:54:59.000Z", "UTC");
 
     dataBoleto.add(Number(fatorData), 'days');
 
@@ -663,6 +694,7 @@ exports.validarBoleto = (codigo) => {
                 retorno.codigoBarras = this.linhaDigitavel2CodBarras(codigo);
                 retorno.linhaDigitavel = codigo;
                 retorno.vencimento = this.identificarData(codigo, 'LINHA_DIGITAVEL');
+                retorno.vencimentoApos22022025 = this.identificarDataApos22022025(codigo, 'LINHA_DIGITAVEL');
                 retorno.valor = this.identificarValor(codigo, 'LINHA_DIGITAVEL');
                 break;
             case 'CODIGO_DE_BARRAS':
@@ -671,6 +703,7 @@ exports.validarBoleto = (codigo) => {
                 retorno.codigoBarras = codigo;
                 retorno.linhaDigitavel = this.codBarras2LinhaDigitavel(codigo, false);
                 retorno.vencimento = this.identificarData(codigo, 'CODIGO_DE_BARRAS');
+                retorno.vencimentoApos22022025 = this.identificarDataApos22022025(codigo, 'CODIGO_DE_BARRAS');
                 retorno.valor = this.identificarValor(codigo, 'CODIGO_DE_BARRAS');
                 break;
             default:
