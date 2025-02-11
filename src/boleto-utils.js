@@ -120,6 +120,18 @@ exports.identificarReferencia = (codigo) => {
     }
 }
 
+/** 
+ * Identifica e retorna o fator data do boleto
+ * 
+ * -------------
+ * 
+ * @param {string} codigo Numeração do boleto
+ * @param {string} tipoCodigo tipo de código inserido (CODIGO_DE_BARRAS / LINHA_DIGITAVEL)
+ * 
+ * -------------
+ * 
+ * @return {number} fatorData
+ */
 exports.obtemFatorData = ({ codigo, tipoCodigo }) => {
     codigo = codigo.replace(/[^0-9]/g, '');
     const tipoBoleto = this.identificarTipoBoleto(codigo);
@@ -144,7 +156,7 @@ exports.obtemFatorData = ({ codigo, tipoCodigo }) => {
 }
 
 /** 
- * Identifica o fator da data de vencimento do boleto
+ * Identifica a data de vencimento do boleto
  * 
  * -------------
  * 
@@ -168,7 +180,7 @@ exports.identificarData = (codigo, tipoCodigo) => {
 }
 
 /** 
- * Identifica o fator da data de vencimento do boleto após 22/05/2025
+ * Identifica a data de vencimento do boleto após 22/05/2025
  * 
  * -------------
  * 
