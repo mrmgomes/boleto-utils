@@ -20,11 +20,25 @@ declare module '@mrmgomes/boleto-utils' {
      */
     function identificarReferencia(codigo: string): { mod: int; efetivo: boolean };
 
+    type ObtemFatorDataParams = { codigo: string, tipoCodigo: string}
+
+    /**
+     * Verifica e retorna o fator data do boleto.
+     * Requer numeração completa (com ou sem formatação) e tipo de código que está sendo inserido (CODIGO_DE_BARRAS ou LINHA_DIGITAVEL).
+     */
+    function obtemFatorData({ codigo, tipoCodigo }: ObtemFatorDataParams): number;
+
     /**
      * Verifica a numeração, o tipo de código inserido e o tipo de boleto e retorna a data de vencimento.
      * Requer numeração completa (com ou sem formatação) e tipo de código que está sendo inserido (CODIGO_DE_BARRAS ou LINHA_DIGITAVEL).
      */
     function identificarData(codigo: string, tipoCodigo: string): Date;
+
+    /**
+     * Verifica a numeração, o tipo de código inserido e o tipo de boleto após 22/02/2025 e retorna a data de vencimento.
+     * Requer numeração completa (com ou sem formatação) e tipo de código que está sendo inserido (CODIGO_DE_BARRAS ou LINHA_DIGITAVEL).
+     */
+    function identificarDataApos22022025(codigo: string, tipoCodigo: string): Date;
 
     /**
      * Verifica a numeração e o tipo de código inserido e retorna o valor do CÓDIGO DE BARRAS do tipo Arrecadação.
@@ -98,6 +112,7 @@ declare module '@mrmgomes/boleto-utils' {
         codigoBarras: string;
         linhaDigitavel: string;
         vencimento: string;
+        vencimentoApos22022025: string;
         valor: number;
     }
 
