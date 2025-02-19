@@ -181,6 +181,7 @@ exports.identificarData = (codigo, tipoCodigo) => {
 
 /** 
  * Identifica a data de vencimento do boleto após 22/05/2025
+ * O novo fator já tem seu início em 1000, logo fator 1000 representa 22/05/2025
  * 
  * -------------
  * 
@@ -191,13 +192,13 @@ exports.identificarData = (codigo, tipoCodigo) => {
  * 
  * @return {Date} dataBoleto
  */
-exports.identificarDataApos22022025 = (codigo, tipoCodigo) => {
+exports.identificarDataComNovoFator2025 = (codigo, tipoCodigo) => {
     var moment = require('moment-timezone');
 
     let fatorData = this.obtemFatorData({ codigo, tipoCodigo });
     let dataBoleto = moment.tz("2025-02-22 20:54:59.000Z", "UTC");
 
-    dataBoleto.add(Number(fatorData), 'days');
+    dataBoleto.add(Number(fatorData) - 1000, 'days');
 
     return dataBoleto.toDate();
 }
@@ -706,7 +707,7 @@ exports.validarBoleto = (codigo) => {
                 retorno.codigoBarras = this.linhaDigitavel2CodBarras(codigo);
                 retorno.linhaDigitavel = codigo;
                 retorno.vencimento = this.identificarData(codigo, 'LINHA_DIGITAVEL');
-                retorno.vencimentoApos22022025 = this.identificarDataApos22022025(codigo, 'LINHA_DIGITAVEL');
+                retorno.vencimentoComNovoFator2025 = this.identificarDataComNovoFator2025(codigo, 'LINHA_DIGITAVEL');
                 retorno.valor = this.identificarValor(codigo, 'LINHA_DIGITAVEL');
                 break;
             case 'CODIGO_DE_BARRAS':
@@ -715,7 +716,7 @@ exports.validarBoleto = (codigo) => {
                 retorno.codigoBarras = codigo;
                 retorno.linhaDigitavel = this.codBarras2LinhaDigitavel(codigo, false);
                 retorno.vencimento = this.identificarData(codigo, 'CODIGO_DE_BARRAS');
-                retorno.vencimentoApos22022025 = this.identificarDataApos22022025(codigo, 'CODIGO_DE_BARRAS');
+                retorno.vencimentoComNovoFator2025 = this.identificarDataComNovoFator2025(codigo, 'CODIGO_DE_BARRAS');
                 retorno.valor = this.identificarValor(codigo, 'CODIGO_DE_BARRAS');
                 break;
             default:
