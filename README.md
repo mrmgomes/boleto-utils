@@ -24,6 +24,7 @@ Função | Definição
 `identificarTipoBoleto(codigo: string)` | Verifica a numeração e retorna o tipo do boleto inserido. Se boleto bancário, convênio ou arrecadação. Requer numeração completa (com ou sem formatação).
 `identificarReferencia(codigo: string)` | Valida o terceiro campo da numeração inserida para definir como será calculado o Dígito Verificador. Requer numeração completa (com ou sem formatação).
 `identificarData(codigo: string, tipoCodigo: string)` | Verifica a numeração, o tipo de código inserido e o tipo de boleto e retorna a data de vencimento. Requer numeração completa (com ou sem formatação) e tipo de código que está sendo inserido (CODIGO_DE_BARRAS ou LINHA_DIGITAVEL).
+`identificarDataComNovoFator2025(codigo: string, tipoCodigo: string)` | Verifica a numeração, o tipo de código inserido e o tipo de boleto e retorna a data de vencimento utilizando o cálculo com o novo fator de 2025. Requer numeração completa (com ou sem formatação) e tipo de código que está sendo inserido (CODIGO_DE_BARRAS ou LINHA_DIGITAVEL).
 `identificarValorCodBarrasArrecadacao(codigo: string, tipoCodigo: string)` | Verifica a numeração e o tipo de código inserido e retorna o valor do CÓDIGO DE BARRAS do tipo Arrecadação. Requer numeração completa (com ou sem formatação) e tipo de código que está sendo inserido (CODIGO_DE_BARRAS ou LINHA_DIGITAVEL).
 `identificarValor(codigo: string, tipoCodigo: string)` | Verifica a numeração, o tipo de código inserido e o tipo de boleto e retorna o valor do título. Requer numeração completa (com ou sem formatação) e tipo de código que está sendo inserido (CODIGO_DE_BARRAS ou LINHA_DIGITAVEL).
 `digitosVerificadores(codigo: string, mod: int)` | Verifica a numeração e o módulo a ser utilizado (Mod 10 ou Mod 11) e retorna o DV (Dígito Verificador). Requer numeração completa (com ou sem formatação) e caracteres numéricos que representam o módulo a ser usado (valores aceitos: 10 ou 11).
@@ -54,6 +55,7 @@ Retorno #1:
     "codigoBarras": "23799336051105800974404300001247044809561686237",
     "linhaDigitavel": "23790448095616862379336011058009740430000124020",
     "vencimento": "2008-11-01T23:54:59.923Z",
+    "vencimentoComNovoFator2025": "2034-09-03T23:54:59.923Z",
     "valor": 1240.2
 }
 ```
@@ -70,7 +72,7 @@ Retorno #2:
     "tipoBoleto": "BANCO",
     "codigoBarras": "34196790600001000002220000005566385101214000",
     "linhaDigitavel": "34192220090000556638551012140003679060000100000",
-    "vencimento": "2019-05-31T23:54:59.373Z",
+    "vencimento": "2044-01-20T23:54:59.373Z",
     "valor": 1000
 }
 ```

@@ -30,8 +30,9 @@ describe('Boletos de 5 campos', function () {
                 expect(result).to.have.property('codigoBarras').to.equal('10499898100000214032006561000100040099726390');
                 expect(result).to.have.property('linhaDigitavel').to.equal('10492006506100010004200997263900989810000021403');
                 expect(result).to.have.property('vencimento');
+                expect(result).to.have.property('vencimentoComNovoFator2025');
                 assert.deepEqual(result.vencimento, new Date('2022-05-10T20:54:59.000Z'));
-                
+                assert.deepEqual(result.vencimentoComNovoFator2025, new Date("2046-12-30T20:54:59.000Z"));
             });
         });
         describe('Linha Digitável', function () {
@@ -45,7 +46,9 @@ describe('Boletos de 5 campos', function () {
                 expect(result).to.have.property('codigoBarras').to.equal('10499898100000214032006561000100040099726390');
                 expect(result).to.have.property('linhaDigitavel').to.equal('10492006506100010004200997263900989810000021403');
                 expect(result).to.have.property('vencimento');
+                expect(result).to.have.property('vencimentoComNovoFator2025');
                 assert.deepEqual(result.vencimento, new Date('2022-05-10T20:54:59.000Z'));
+                assert.deepEqual(result.vencimentoComNovoFator2025, new Date("2046-12-30T20:54:59.000Z"));
             });
         });
     });
