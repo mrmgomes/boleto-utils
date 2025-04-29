@@ -1,6 +1,6 @@
 {
   "name": "@mrmgomes/boleto-utils",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Biblioteca com funções úteis para a validação de todos os tipos de boleto",
   "main": "./src/boleto-utils.js",
   "scripts": {
