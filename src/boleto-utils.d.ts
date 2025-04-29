@@ -38,7 +38,7 @@ declare module '@mrmgomes/boleto-utils' {
      * Verifica a numeração, o tipo de código inserido e o tipo de boleto após 22/02/2025 e retorna a data de vencimento.
      * Requer numeração completa (com ou sem formatação) e tipo de código que está sendo inserido (CODIGO_DE_BARRAS ou LINHA_DIGITAVEL).
      */
-    function identificarDataApos22022025(codigo: string, tipoCodigo: string): Date;
+    function identificarDataComNovoFator2025(codigo: string, tipoCodigo: string): Date;
 
     /**
      * Verifica a numeração e o tipo de código inserido e retorna o valor do CÓDIGO DE BARRAS do tipo Arrecadação.
